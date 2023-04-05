@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Setores {% endblock %}</h1>
+    {% for sector in sectors %}
+        <a href="{{ url_for('sector', sector_id=sector['sector']) }}">
+            <h2>{{ sector['description'] }} (#{{sector['sector']}})</h2>
+        </a>
+        <hr>
+    {% endfor %}
+	<a href="{{ url_for('sector_new') }}">
+		<span class="badge badge-warning">Novo</span>
+	</a>
+{% endblock %}

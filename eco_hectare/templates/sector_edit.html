@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Editar setor {{ sector['sector'] }} {% endblock %}</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="description">Descrição</label>
+        <input type="text" name="description" placeholder="Descrição do setor"
+               class="form-control"
+               value="{{ request.form['description'] or sector['description'] }}">
+        </input>
+    </div>
+
+    <div class="form-group">
+        <label for="cal">Calibração</label>
+        <input type="number" name="cal" placeholder="Calibração do setor"
+               class="form-control"
+			   value="{{ request.form['cal'] or sector['cal'] }}"
+		</input>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+</form>
+<hr>
+
+{% endblock %}

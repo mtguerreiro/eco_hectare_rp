@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Cadastre um novo setor {% endblock %}</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="sector_id">Número do setor</label>
+        <input type="number" name="sector_id" placeholder="0"
+               class="form-control"
+			   value="{{ request.form['sector_id'] }}"
+		</input>
+    </div>
+	
+    <div class="form-group">
+        <label for="description">Descrição do setor</label>
+        <input type="text" name="description"
+               placeholder="Descrição" class="form-control"
+               value="{{ request.form['description'] }}"></input>
+    </div>
+
+    <div class="form-group">
+        <label for="cal">Calibração</label>
+        <input type="number" name="cal" placeholder="0"
+               class="form-control"
+			   value="{{ request.form['cal'] }}"
+		</input>
+    </div>
+	
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</form>
+{% endblock %}
