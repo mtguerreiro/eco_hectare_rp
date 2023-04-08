@@ -7,10 +7,28 @@
 	<h3>Calibração</h3>
 	<p> {{ sector['cal'] }}</p>
 	<hr>
+	<h3>Atuadores</h3>
+	{% for device in devices %}
+		{% if device['type'] == 'atuador' %} 
+		<a href="{{ url_for('device', deveui=device['deveui']) }}">
+			<p>{{ device['deveui'] }}</p>
+		</a>
+		{% endif %}
+	{% endfor %}
+	<hr>
+	<h3>Sensores</h3>
+	{% for device in devices %}
+		{% if device['type'] == 'sensor' %} 
+		<a href="{{ url_for('device', deveui=device['deveui']) }}">
+			<p>{{ device['deveui'] }}</p>
+		</a>
+		{% endif %}
+	{% endfor %}
+	<hr>
 	<a href="{{ url_for('sector_edit', sector_id=sector['sector']) }}">
 		<span class="badge badge-warning">Editar</span>
 	</a>
-	
+	<hr>
 <form action="{{ url_for('sector_delete', sector_id=sector['sector']) }}" method="POST">
     <input type="submit" value="Excluir setor"
             class="btn btn-danger btn-sm"

@@ -6,7 +6,6 @@ class DataBase:
 
         self.db_file = db_file
 
-##        self.create()
         if create == True:
             try:
                 self.create()
@@ -30,21 +29,21 @@ class DataBase:
         # Creates sectors tables
         cursor.execute("CREATE TABLE sectors(sector INTEGER PRIMARY KEY, description, cal)")
 
-        data = [
-            (0, 'null', 0),
-            (1, 'batata', 0),
-            (2, 'tomate', 0)
-        ]
-
-        cursor.executemany("INSERT INTO sectors VALUES(?, ?, ?)", data)
-        conn.commit()
+##        data = [
+##            (0, 'null', 0),
+##            (1, 'batata', 0),
+##            (2, 'tomate', 0)
+##        ]
+##
+##        cursor.executemany("INSERT INTO sectors VALUES(?, ?, ?)", data)
+##        conn.commit()
 
         # Creates devices table
         cursor.execute("CREATE TABLE devices(deveui PRIMARY KEY, type, sector, FOREIGN KEY(sector) REFERENCES sectors(sector))")
 
         data = [
-            ('3dc395241c7f8501', 'atuador', 0),
-            ('75775f04d7f01fe0', 'sensor', 0)
+            ('3dc395241c7f8501', 'atuador', 1),
+            ('75775f04d7f01fe0', 'sensor', 1)
         ]
 
         cursor.executemany("INSERT INTO devices VALUES(?, ?, ?)", data)
@@ -72,14 +71,11 @@ class DataBase:
             return True
 
 
-##    def add_entry(self, cursor, table, data):
-##
-##        cmd = "INSERT INTO {:} VALUES(?, ?, ?)"
-
     def delete_entry(self, cursor, table, key, row):
         
         cmd = "DELETE FROM {:} WHERE {:} = ?".format(table, key)
         cursor.execute(cmd, (row,))       
+
 
     def insert_sector(self, sector, description='', cal=0):
 
@@ -143,7 +139,8 @@ class DataBase:
         conn.commit()
 
         conn.close()
-        
+
+    
     def get_sectors(self):
 
         conn = self.db_connect(self.db_file)
@@ -153,8 +150,81 @@ class DataBase:
         conn.close()
 
         return sectors
-        
 
+    
+    def get_devices_by_sector(self, sector):
+
+        conn = self.db_connect(self.db_file)
         
+        devices = conn.execute('SELECT * FROM devices WHERE sector = ?', (sector,)).fetchall()
+
+        conn.close()
+
+        return devices
+
+
+    def get_devices(self):
+
+        conn = self.db_connect(self.db_file)
+
+        devices = conn.execute('SELECT * FROM devices').fetchall()
+
+        conn.close()
+
+        return devices
+
+
+    def get_device_data(self, deveui):
+
+        conn = self.db_connect(self.db_file)
+
+        device_data = conn.execute('SELECT * FROM devices WHERE deveui = ?', (deveui,)).fetchall()[0]
+
+        conn.close()
+
+        return device_data
+
+
+    def insert_device(self, deveui, sector=0, dev_type='sensor'):
+
+        if dev_type != 'sensor' and dev_type != 'atuador':
+            print('Device type must be \'sensor\' or \'atuador\'')
+            return -1
+
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if device already exists
+        exists = self.check_entry_exists(cursor, 'devices', 'deveui', deveui)
+        if exists == True:
+            print('deveui {:} is already registered!\n'.format(deveui))
+            return -2
+
+        data = (deveui, dev_type, sector)
+        cursor.execute("INSERT INTO devices VALUES(?, ?, ?)", data)
+        conn.commit()
+
+        conn.close()       
+
+        return 0
+
+
+    def delete_device(self, deveui):
         
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if device exists
+        exists = self.check_entry_exists(cursor, 'devices', 'deveui', deveui)
+        if exists == False:
+            print('deveui {:} does not exist!\n'.format(deveui))
+            return -1
+
+        self.delete_entry(cursor, 'devices', 'deveui', deveui)
+        conn.commit()
+
+        conn.close()
         
+        return 0

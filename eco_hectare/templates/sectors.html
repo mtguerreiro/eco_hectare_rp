@@ -4,7 +4,7 @@
     <h1>{% block title %} Setores {% endblock %}</h1>
     {% for sector in sectors %}
         <a href="{{ url_for('sector', sector_id=sector['sector']) }}">
-            <h2>{{ sector['description'] }} (#{{sector['sector']}})</h2>
+            <h3>{{ sector['description'] }} (#{{sector['sector']}})</h3>
         </a>
         <hr>
     {% endfor %}

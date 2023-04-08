@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Cadastre um novo dispositivo {% endblock %}</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="deveui">deveui do dispositivo</label>
+        <input type="text" name="deveui" placeholder="0"
+               class="form-control"
+			   value="{{ request.form['deveui'] }}"
+		</input>
+    </div>
+	
+    <div class="form-group">
+		<label for="type">Selecione o tipo:</label>
+
+		<select name="type" id="type" type="text" value="{{ request.form['type'] }}">
+		  <option value="sensor">Sensor</option>
+		  <option value="atuador">Atuador</option>
+		</select>
+    </div>
+
+    <div class="form-group">
+		<label for="sector">Selecione o setor</label>
+
+		<select name="sector" id="sector" type="number" value="{{ request.form['sector'] }}">
+		  <option value=0>NA</option>
+		  {% for sector in sectors %}
+		  <option value={{sector['sector']}}>{{sector['sector']}}</option>
+		  {% endfor %}
+		</select>
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+	
+</form>
+{% endblock %}

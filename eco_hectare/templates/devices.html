@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Dispositivos {% endblock %}</h1>
+	<h3>Atuadores</h3>
+	{% for device in devices %}
+		{% if device['type'] == 'atuador' %}
+        <a href="{{ url_for('device', deveui=device['deveui']) }}">
+            <h3>{{ device['deveui'] }} </h3>
+        </a>		
+		{% endif %}
+	{% endfor %}
+	<hr>
+	<h3>Sensores</h3>
+	{% for device in devices %}
+		{% if device['type'] == 'sensor' %}
+        <a href="{{ url_for('device', deveui=device['deveui']) }}">
+            <h3>{{ device['deveui'] }} </h3>
+        </a>		
+		{% endif %}
+	{% endfor %}
+	<hr>
+	<a href="{{ url_for('device_new') }}">
+		<span class="badge badge-warning">Novo</span>
+	</a>
+{% endblock %}

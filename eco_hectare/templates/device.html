@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>{% block title %} Dispositivo {{ device_data['deveui'] }} {% endblock %}</h2>
+	<hr>
+    <h3>Tipo</h3>
+	<p> {{ device_data['type'] }}</p>
+	<hr>
+	<h3>Setor</h3>
+	{% if device_data['sector'] == 0 %}
+		<p> - </p>
+	{% else %}
+		<a href="{{ url_for('sector', sector_id=device_data['sector']) }}">
+			<p>{{ device_data['sector'] }}</p>
+		</a>	
+	{% endif %}
+	<hr>
+{% endblock %}
