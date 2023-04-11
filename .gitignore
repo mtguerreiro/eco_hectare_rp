@@ -1,5 +1,4 @@
 eco_hectare.egg-info
 eco_hectare/__pycache__
 .idea/
-examples/eh_debug.py
 main.db
