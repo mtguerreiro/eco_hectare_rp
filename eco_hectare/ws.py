@@ -7,12 +7,20 @@ import eco_hectare as eh
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'jajaja'
 
-eh_db = eh.db.DataBase(db_file='../main.db', create=False)
+eh_db = eh.db.DataBase(db_file='static/main.db', create=True)
 
 @app.route('/')
 def index():
 
     return render_template('index.html')
+
+
+##@app.route('/measurements')
+##def measurements():
+##
+##    sectors = eh_db.get_sectors()
+##    
+##    return render_template('measurements.html', sectors=sectors)
 
 
 @app.route('/devices')
@@ -30,7 +38,7 @@ def device_new():
 
     if request.method == 'POST':
         deveui = request.form['deveui']
-        sector = request.form['sector']
+        sector = int(request.form['sector'])
         dev_type = request.form['type']
 
         if deveui == '':
@@ -46,12 +54,41 @@ def device_new():
     return render_template('device_new.html', sectors=sectors)
 
 
+@app.route('/devices/<string:deveui>/edit', methods=('GET', 'POST'))
+def device_edit(deveui):
+
+    sectors = eh_db.get_sectors()
+    device_data = eh_db.get_device_data(deveui)
+
+    if request.method == 'POST':
+        sector = int(request.form['sector'])
+        dev_type = request.form['type']
+
+        status = eh_db.update_device_data(deveui, sector=sector, dev_type=dev_type)
+        if status != 0:
+            flash('Erro ao salvar configurações')            
+            return redirect(url_for('device', deveui=deveui))
+        else:
+            return redirect(url_for('device', deveui=deveui))
+
+    return render_template('device_edit.html', device=device_data, sectors=sectors)
+
+
+@app.route('/devices/<string:deveui>/delete', methods=('POST',))
+def device_delete(deveui):
+
+    eh_db.delete_device(deveui)
+
+    return redirect(url_for('devices'))
+
+
 @app.route('/devices/<string:deveui>')
 def device(deveui):
 
     device_data = eh_db.get_device_data(deveui)
 
     return render_template('device.html', device_data=device_data)
+
 
 @app.route('/sectors')
 def sectors():
@@ -69,6 +106,13 @@ def sector(sector_id):
 
     return render_template('sector.html', sector=sector_data, devices=devices)
 
+
+@app.route('/sectors/<int:sector_id>/measurements')
+def sector_measurements(sector_id):
+
+    sector_data = eh_db.get_sector_data(sector_id)
+    
+    return render_template('sector_measurements.html', sector=sector_data)
 
 @app.route('/sectors/<int:sector_id>/edit', methods=('GET', 'POST'))
 def sector_edit(sector_id):

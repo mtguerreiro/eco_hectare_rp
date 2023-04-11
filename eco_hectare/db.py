@@ -2,7 +2,7 @@ import sqlite3
 import eco_hectare as eh
 
 class DataBase:
-    def __init__(self, db_file='main.db', create=False):
+    def __init__(self, db_file='static/main.db', create=False):
 
         self.db_file = db_file
 
@@ -42,18 +42,18 @@ class DataBase:
         cursor.execute("CREATE TABLE devices(deveui PRIMARY KEY, type, sector, FOREIGN KEY(sector) REFERENCES sectors(sector))")
 
         data = [
-            ('3dc395241c7f8501', 'atuador', 1),
-            ('75775f04d7f01fe0', 'sensor', 1)
+            ('3dc395241c7f8501', 'atuador', 0),
+            ('75775f04d7f01fe0', 'sensor', 0)
         ]
 
         cursor.executemany("INSERT INTO devices VALUES(?, ?, ?)", data)
         conn.commit()
 
         # Creates measurements table
-        cursor.execute("CREATE TABLE measurements(id, deveui, value, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
+        cursor.execute("CREATE TABLE measurements(id INTEGER PRIMARY KEY, deveui, value INTEGER, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
 
         # Creates irrigations table
-        cursor.execute("CREATE TABLE irrigations(id, sector, ts, FOREIGN KEY(sector) REFERENCES sectors(sector))")
+        cursor.execute("CREATE TABLE irrigations(id INTEGER PRIMARY KEY, sector, ts, FOREIGN KEY(sector) REFERENCES sectors(sector))")
 
         conn.close()
 
@@ -228,3 +228,43 @@ class DataBase:
         conn.close()
         
         return 0
+
+
+    def update_device_data(self, deveui, sector=0, dev_type='sensor'):
+
+        if dev_type != 'sensor' and dev_type != 'atuador':
+            print('Device type must be \'sensor\' or \'atuador\'')
+            return -1
+
+        data = (sector, dev_type, deveui)
+
+        conn = self.db_connect(self.db_file)
+
+        conn.execute('UPDATE devices SET sector = ?, type = ? WHERE deveui = ?', data)
+        conn.commit()
+
+        conn.close()
+
+        return 0
+
+    
+    def insert_measurement(self, deveui, value, ts):
+
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if device exists
+        exists = self.check_entry_exists(cursor, 'devices', 'deveui', deveui)
+        if exists == False:
+            print('deveui {:} does not exist!\n'.format(deveui))
+            return -1
+
+        data = (deveui, value, ts)
+        cursor.execute("INSERT INTO measurements (deveui, value, ts) VALUES(?, ?, ?)", data)
+        conn.commit()
+
+        conn.close()
+
+        return 0
+    

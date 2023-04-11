@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Editar dispositivo {{ device['deveui'] }} {% endblock %}</h1>
+
+<h2> Configurações atuais </h2>
+<hr>
+<h3>Tipo</h3>
+<p> {{ device['type'] }}</p>
+<hr>
+<h3>Setor</h3>
+{% if device['sector'] == 0 %}
+	<p> NA </p>
+{% else %}
+	<a href="{{ url_for('sector', sector_id=device['sector']) }}">
+		<p>{{ device['sector'] }}</p>
+	</a>	
+{% endif %}
+<hr>
+	
+<form method="post">
+
+    <div class="form-group">
+		<label for="type">Tipo</label>
+
+		<select name="type" id="type" type="text" value="{{ request.form['type'] or device['type'] }}">
+		  <option value="sensor">Sensor</option>
+		  <option value="atuador">Atuador</option>
+		</select>
+    </div>
+
+    <div class="form-group">
+		<label for="sector">Setor</label>
+		<select name="sector" id="sector" type="number" value="{{ request.form['sector'] or device['sector'] }}">
+			<option value=0>NA</option>
+			{% for sector in sectors %}
+			<option value={{sector['sector']}}>{{sector['sector']}}</option>
+			{% endfor %}
+		</select>
+    </div>
+	
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+</form>
+<hr>
+
+{% endblock %}

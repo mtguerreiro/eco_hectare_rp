@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Leituras {% endblock %}</h1>
+
+	<head>
+	  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	</head>
+
+	<body>
+	<div id="myDiv"></div>
+	<script type="text/javascript" src="{{ url_for('static', filename='sql-wasm.js') }}"></script>
+
+	</body>
+
+	<body>
+	{% for sector in sectors %}
+	<p>Setor {{ sector['sector'] }}</p>
+	<div id="myDiv{{ sector['sector'] }}"></div>
+    <script type="module" sector_nr={{sector['sector']}} plotid="myDiv{{sector['sector']}}" id="plotscript">
+
+	const sqlPromise = initSqlJs({
+			locateFile: () => "static/sql-wasm.wasm",
+	});
+	const dataPromise = fetch("static/main.db").then(res => res.arrayBuffer());
+	const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+	
+	var thisScript = window.document.currentScript;
+	
+	var sector_nr = document.getElementById("plotscript").getAttribute("sector_nr");
+	var plotid = document.getElementById("plotscript").getAttribute("plotid");
+	
+	function get_deveuis(sec){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM devices WHERE sector = ?", [parseInt(sec)]);
+
+		const deveuis = [];
+
+		while(stmt.step()) {
+		deveuis.push(stmt.getAsObject().deveui);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return deveuis;
+	}
+
+	function get_measurements(deveui){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM measurements WHERE deveui = ?", [deveui]);
+
+		const values = [];
+		const t = [];
+
+		while(stmt.step()) {
+		values.push(stmt.getAsObject().value);
+		t.push(stmt.getAsObject().ts);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return [t, values];
+	}
+
+	var devs = get_deveuis(sector_nr)
+	var meas = get_measurements(devs[0])
+
+	var data = [];
+	
+	for ( let i = 0; i < devs.length; i++ ){
+	
+		var meas_data = get_measurements(devs[i]);
+		var v = {
+			x: meas_data[0],
+			y: meas_data[1],
+		}
+		data.push(v);
+	}
+	
+	console.log(thisScript)
+	Plotly.newPlot(plotid, data);
+		
+    </script>
+	
+	{% endfor %}
+	</body>
+
+	
+{% endblock %}

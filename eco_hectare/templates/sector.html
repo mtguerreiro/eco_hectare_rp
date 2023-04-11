@@ -29,9 +29,16 @@
 		<span class="badge badge-warning">Editar</span>
 	</a>
 	<hr>
-<form action="{{ url_for('sector_delete', sector_id=sector['sector']) }}" method="POST">
-    <input type="submit" value="Excluir setor"
-            class="btn btn-danger btn-sm"
-            onclick="return confirm('Tem certeza que deseja excluir esse setor?')">
-</form>
+	
+	<a href="{{ url_for('sector_measurements', sector_id=sector['sector']) }}">
+		<h3> Leituras </h3>
+	</a>
+	
+	<hr>
+	
+	<form action="{{ url_for('sector_delete', sector_id=sector['sector']) }}" method="POST">
+		<input type="submit" value="Excluir setor"
+				class="btn btn-danger btn-sm"
+				onclick="return confirm('Tem certeza que deseja excluir esse setor?')">
+	</form>
 {% endblock %}
