@@ -22,11 +22,12 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     data = json.loads(msg.payload)
     deveui = base64.b64decode(data['devEUI']).hex()
-    sensor_data = json.loads(data['objectJSON'])['dados']
-    t = datetime.datetime.utcnow().astimezone(zoneinfo.ZoneInfo('America/Sao_Paulo'))
-    ts = t.strftime("%Y-%m-%d %H:%M:%S")
-    print('+topic: {:}\ndevEUI: {:}\tdata: {:} \ttimestamp: {:}\n\n'.format(msg.topic, deveui, sensor_data, ts))
-    db.insert_measurement(deveui, sensor_data, ts)
+    try:
+        sensor_data = json.loads(data['objectJSON'])['dados']
+        t = datetime.datetime.utcnow().astimezone(zoneinfo.ZoneInfo('America/Sao_Paulo'))
+        ts = t.strftime("%Y-%m-%d %H:%M:%S")
+        print('+topic: {:}\ndevEUI: {:}\tdata: {:} \ttimestamp: {:}\n\n'.format(msg.topic, deveui, sensor_data, ts))
+        db.insert_measurement(deveui, sensor_data, ts)
     
 
 client = mqtt.Client()
