@@ -10,7 +10,7 @@ class DataBase:
             try:
                 self.create()
             except:
-                print('Failed to create datebase, probably exists already...\n')
+                print('Failed to create database, probably exists already...\n')
 
 
     def db_connect(self, db):
@@ -52,6 +52,9 @@ class DataBase:
         # Creates measurements table
         cursor.execute("CREATE TABLE measurements(id INTEGER PRIMARY KEY, deveui, value INTEGER, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
 
+        # Creates RSSI and SNR tables
+        cursor.execute("CREATE TABLE rssi_snr(id INTEGER PRIMARY KEY, deveui, rssi, snr, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
+        
         # Creates irrigations table
         cursor.execute("CREATE TABLE irrigations(id INTEGER PRIMARY KEY, sector, ts, FOREIGN KEY(sector) REFERENCES sectors(sector))")
 
@@ -268,3 +271,23 @@ class DataBase:
 
         return 0
     
+
+    def insert_rssi_snr(self, deveui, rssi, snr, ts):
+
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if device exists
+        exists = self.check_entry_exists(cursor, 'devices', 'deveui', deveui)
+        if exists == False:
+            print('deveui {:} does not exist!\n'.format(deveui))
+            return -1
+
+        data = (deveui, rssi, snr, ts)
+        cursor.execute("INSERT INTO rssi_snr (deveui, rssi, snr, ts) VALUES(?, ?, ?, ?)", data)
+        conn.commit()
+
+        conn.close()
+
+        return 0

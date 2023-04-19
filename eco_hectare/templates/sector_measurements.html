@@ -84,5 +84,154 @@
 	
 	</body>
 
+	<body>
+	<p> SNR {{ sector['sector'] }}</p>
+	<div id="myDiv2"></div>
+    <script type="module" sector_nr={{sector['sector']}} id="snrplot">
+
+	const sqlPromise = initSqlJs({
+			locateFile: () => "../../static/sql-wasm.wasm",
+	});
+	const dataPromise = fetch("../../static/main.db").then(res => res.arrayBuffer());
+	const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+	
+	var sector_nr = document.getElementById("snrplot").getAttribute("sector_nr");
+	
+	function get_deveuis(sec){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM devices WHERE sector = ?", [parseInt(sec)]);
+
+		const deveuis = [];
+
+		while(stmt.step()) {
+		deveuis.push(stmt.getAsObject().deveui);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return deveuis;
+	}
+
+	function get_measurements(deveui){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM rssi_snr WHERE deveui = ?", [deveui]);
+
+		const snrs = [];
+		const rssis = [];
+		const t = [];
+
+		while(stmt.step()) {
+		snrs.push(stmt.getAsObject().snr);
+		rssis.push(stmt.getAsObject().rssi);
+		t.push(stmt.getAsObject().ts);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return [t, rssis, snrs];
+	}
+
+	var devs = get_deveuis(sector_nr)
+
+	var data = [];
+	
+	for ( let i = 0; i < devs.length; i++ ){
+	
+		var meas_data = get_measurements(devs[i]);
+		console.log(meas_data)
+		var v = {
+			x: meas_data[0],
+			y: meas_data[2],
+		}
+		data.push(v);
+	}
+	
+	console.log(devs)
+	Plotly.newPlot("myDiv2", data);
+		
+    </script>
+	
+	</body>
+
+	<body>
+	<p> RSSI {{ sector['sector'] }}</p>
+	<div id="myDiv3"></div>
+    <script type="module" sector_nr={{sector['sector']}} id="rssiplot">
+
+	const sqlPromise = initSqlJs({
+			locateFile: () => "../../static/sql-wasm.wasm",
+	});
+	const dataPromise = fetch("../../static/main.db").then(res => res.arrayBuffer());
+	const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+	
+	var sector_nr = document.getElementById("rssiplot").getAttribute("sector_nr");
+	
+	function get_deveuis(sec){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM devices WHERE sector = ?", [parseInt(sec)]);
+
+		const deveuis = [];
+
+		while(stmt.step()) {
+		deveuis.push(stmt.getAsObject().deveui);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return deveuis;
+	}
+
+	function get_measurements(deveui){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM rssi_snr WHERE deveui = ?", [deveui]);
+
+		const snrs = [];
+		const rssis = [];
+		const t = [];
+
+		while(stmt.step()) {
+		snrs.push(stmt.getAsObject().snr);
+		rssis.push(stmt.getAsObject().rssi);
+		t.push(stmt.getAsObject().ts);
+		}
+
+		stmt.free()
+
+		db.close()
+
+		return [t, rssis, snrs];
+	}
+
+	var devs = get_deveuis(sector_nr)
+
+	var data = [];
+	
+	for ( let i = 0; i < devs.length; i++ ){
+	
+		var meas_data = get_measurements(devs[i]);
+		console.log(meas_data)
+		var v = {
+			x: meas_data[0],
+			y: meas_data[1],
+		}
+		data.push(v);
+	}
+	
+	console.log(devs)
+	Plotly.newPlot("myDiv3", data);
+		
+    </script>
+	
+	</body>
 	
 {% endblock %}
