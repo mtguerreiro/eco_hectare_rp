@@ -28,7 +28,8 @@ def on_message(client, userdata, msg):
         ts = t.strftime("%Y-%m-%d %H:%M:%S")
         print('+topic: {:}\ndevEUI: {:}\tdata: {:} \ttimestamp: {:}\n\n'.format(msg.topic, deveui, sensor_data, ts))
         db.insert_measurement(deveui, sensor_data, ts)
-    
+    except:
+        pass
 
 client = mqtt.Client()
 client.on_connect = on_connect
