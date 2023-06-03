@@ -27,27 +27,10 @@ class DataBase:
         cursor = conn.cursor()
 
         # Creates sectors tables
-        cursor.execute("CREATE TABLE sectors(sector INTEGER PRIMARY KEY, description, cal)")
-
-##        data = [
-##            (0, 'null', 0),
-##            (1, 'batata', 0),
-##            (2, 'tomate', 0)
-##        ]
-##
-##        cursor.executemany("INSERT INTO sectors VALUES(?, ?, ?)", data)
-##        conn.commit()
+        cursor.execute("CREATE TABLE sectors(sector INTEGER PRIMARY KEY, description, cal, interval)")
 
         # Creates devices table
         cursor.execute("CREATE TABLE devices(deveui PRIMARY KEY, type, sector, FOREIGN KEY(sector) REFERENCES sectors(sector))")
-
-        data = [
-            ('3dc395241c7f8501', 'atuador', 0),
-            ('75775f04d7f01fe0', 'sensor', 0)
-        ]
-
-        cursor.executemany("INSERT INTO devices VALUES(?, ?, ?)", data)
-        conn.commit()
 
         # Creates measurements table
         cursor.execute("CREATE TABLE measurements(id INTEGER PRIMARY KEY, deveui, value INTEGER, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
@@ -80,7 +63,7 @@ class DataBase:
         cursor.execute(cmd, (row,))       
 
 
-    def insert_sector(self, sector, description='', cal=0):
+    def insert_sector(self, sector, description='', cal=0, interval=0):
 
         conn = self.db_connect(self.db_file)
 
@@ -92,8 +75,8 @@ class DataBase:
             print('Sector {:} is already registered!\n'.format(sector))
             return -1
 
-        data = (sector, description, cal)
-        cursor.execute("INSERT INTO sectors VALUES(?, ?, ?)", data)
+        data = (sector, description, cal, interval)
+        cursor.execute("INSERT INTO sectors VALUES(?, ?, ?, ?)", data)
         conn.commit()
 
         conn.close()
@@ -132,13 +115,13 @@ class DataBase:
         return sector_data
     
 
-    def update_sector_data(self, sector_id, desc, cal):
+    def update_sector_data(self, sector_id, desc, cal, interval):
 
-        data = (desc, cal, sector_id)
+        data = (desc, cal, interval, sector_id)
 
         conn = self.db_connect(self.db_file)
 
-        conn.execute('UPDATE sectors SET description = ?, cal = ? WHERE sector = ?', data)
+        conn.execute('UPDATE sectors SET description = ?, cal = ?, interval = ? WHERE sector = ?', data)
         conn.commit()
 
         conn.close()

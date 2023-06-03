@@ -15,14 +15,6 @@ def index():
     return render_template('index.html')
 
 
-##@app.route('/measurements')
-##def measurements():
-##
-##    sectors = eh_db.get_sectors()
-##    
-##    return render_template('measurements.html', sectors=sectors)
-
-
 @app.route('/devices')
 def devices():
 
@@ -122,13 +114,16 @@ def sector_edit(sector_id):
     if request.method == 'POST':
         desc = request.form['description']
         cal = request.form['cal']
+        interval = request.form['interval']
 
         if desc == '':
             flash('Descrição necessária!')
         elif not cal:
             flash('Calibração necessária!')
+        elif not interval:
+            flash('Intervalo entre irrigações necessário!')
         else:
-            eh_db.update_sector_data(sector_id, desc, cal)
+            eh_db.update_sector_data(sector_id, desc, cal, interval)
             
             return redirect(url_for('sector', sector_id=sector_id))   
 
@@ -142,15 +137,18 @@ def sector_new():
         sector_id = request.form['sector_id']
         desc = request.form['description']
         cal = request.form['cal']
+        interval = request.form['interval']
 
         if desc == '':
             flash('Descrição necessária!')
         elif not cal:
             flash('Calibração necessária!')
+        elif not interval:
+            flash('Intervalo entre irrigações necessário!')
         elif not sector_id:
             flash('Informe um número para o setor!')
         else:
-            if eh_db.insert_sector(sector_id, description=desc, cal=cal) == -1:
+            if eh_db.insert_sector(sector_id, description=desc, cal=cal, interval=interval) == -1:
                 flash('Setor já cadastrado!')
                 return redirect(url_for('sector_new'))
             

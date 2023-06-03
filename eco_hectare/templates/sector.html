@@ -3,9 +3,14 @@
 {% block content %}
     <h2>{% block title %} Setor {{ sector['sector'] }} {% endblock %}</h2>
     <h3>Descrição</h3>
+	<hr>
 	<p> {{ sector['description'] }}</p>
+	<hr>
 	<h3>Calibração</h3>
 	<p> {{ sector['cal'] }}</p>
+	<hr>
+	<h3>Intervalo entre irrigações</h3>
+	<p> {{ sector['interval'] }}</p>
 	<hr>
 	<h3>Atuadores</h3>
 	{% for device in devices %}
@@ -25,10 +30,6 @@
 		{% endif %}
 	{% endfor %}
 	<hr>
-	<a href="{{ url_for('sector_edit', sector_id=sector['sector']) }}">
-		<span class="badge badge-warning">Editar</span>
-	</a>
-	<hr>
 	
 	<a href="{{ url_for('sector_measurements', sector_id=sector['sector']) }}">
 		<h3> Leituras </h3>
@@ -36,6 +37,9 @@
 	
 	<hr>
 	
+	<a href="{{ url_for('sector_edit', sector_id=sector['sector']) }}">
+	<span class="badge badge-warning">Editar</span>
+	</a>
 	<form action="{{ url_for('sector_delete', sector_id=sector['sector']) }}" method="POST">
 		<input type="submit" value="Excluir setor"
 				class="btn btn-danger btn-sm"

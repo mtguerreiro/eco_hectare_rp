@@ -19,6 +19,15 @@
 			   value="{{ request.form['cal'] or sector['cal'] }}"
 		</input>
     </div>
+
+    <div class="form-group">
+        <label for="interval">Intervalo entre irrigações</label>
+        <input type="number" name="interval" placeholder="Intervalo entre irrigações"
+               class="form-control"
+			   value="{{ request.form['interval'] or sector['interval'] }}"
+		</input>
+    </div>
+	
     <div class="form-group">
         <button type="submit" class="btn btn-primary">Salvar</button>
     </div>
