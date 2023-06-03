@@ -10,10 +10,18 @@ def insert_random_measurements(deveui, n):
 
     meas = [random.randint(0, 4095) for i in range(n)]
     t = datetime.datetime.today()
-    ts = [(t + datetime.timedelta(seconds=60*i)).isoformat(' ', 'seconds') for i in range(n)]
+    ts = [(t + datetime.timedelta(seconds=10*i)).isoformat(' ', 'seconds') for i in range(n)]
 
     for t, m in zip(ts, meas):
         db.insert_measurement(deveui, m, t)
+
+def insert_irrs(sector, n):
+
+    t = datetime.datetime.today()
+    ts = [(t + datetime.timedelta(seconds=10*i)).isoformat(' ', 'seconds') for i in range(n)]
+
+    for t in ts:
+        db.insert_irrigation(sector, t)
 
 def getTemp():
     file = '/sys/class/hwmon/hwmon0/temp1_input'
@@ -22,15 +30,18 @@ def getTemp():
     
     return float(data) / 1000.0
 
+#insert_irrs(sector, n)
+#insert_random_measurements('deveui1', 10)
+##insert_random_measurements('deveui2', 10)
 #insert_random_measurements('75775f04d7f01fe0', 10)
 #insert_random_measurements('3dc395241c7f8501', 10)
 
-while True:
-    
-    t = datetime.datetime.today().isoformat(' ', 'seconds')
-    temp = getTemp()
-    
-    print('Temperature: {:.2f}\tTime stamp: {:}'.format(temp, t))
-    db.insert_measurement('75775f04d7f01fe0', temp, t)
-    
-    time.sleep(60)
+##while True:
+##    
+##    t = datetime.datetime.today().isoformat(' ', 'seconds')
+##    temp = getTemp()
+##    
+##    print('Temperature: {:.2f}\tTime stamp: {:}'.format(temp, t))
+##    db.insert_measurement('75775f04d7f01fe0', temp, t)
+##    
+##    time.sleep(60)

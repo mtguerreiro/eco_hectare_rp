@@ -62,24 +62,60 @@
 
 		return [t, values];
 	}
+	
+	function get_avg(sector){
+		const db = new SQL.Database(new Uint8Array(buf));
+
+		const stmt = db.prepare("SELECT * FROM sector_avg_meas WHERE sector = ?", [parseInt(sector)]);
+
+		const values = [];
+		const t = [];
+
+		while(stmt.step()) {
+		values.push(stmt.getAsObject().value);
+		t.push(stmt.getAsObject().ts);
+		}
+
+		stmt.free()
+
+		db.close()
+		
+		//console.log(values)
+
+		return [t, values];
+	}
 
 	var devs = get_deveuis(sector_nr)
 
 	var data = [];
+	//var data_avg = [];
 	
-	for ( let i = 0; i < devs.length; i++ ){
+	for ( let i = 0; i <= devs.length; i++ ){	
 	
-		var meas_data = get_measurements(devs[i]);
-		var v = {
-			x: meas_data[0],
-			y: meas_data[1],
+		if( i < devs.length ){
+			var meas_data = get_measurements(devs[i]);
+			var v = {
+				x: meas_data[0],
+				y: meas_data[1],
+			}
+			data.push(v);
 		}
-		data.push(v);
+		else{
+			var meas_data = get_avg(sector_nr);
+			//console.log(sector_nr)
+			var v = {
+				x: meas_data[0],
+				y: meas_data[1],
+			}
+			data.push(v);		
+		}
+
 	}
+
 	
-	console.log(devs)
+	//console.log(devs)
 	Plotly.newPlot("myDiv", data);
-		
+	//Plotly.newPlot("myDiv", data_avg);
     </script>
 	
 	</body>
@@ -144,7 +180,7 @@
 	for ( let i = 0; i < devs.length; i++ ){
 	
 		var meas_data = get_measurements(devs[i]);
-		console.log(meas_data)
+		//console.log(meas_data)
 		var v = {
 			x: meas_data[0],
 			y: meas_data[2],
@@ -152,7 +188,7 @@
 		data.push(v);
 	}
 	
-	console.log(devs)
+	//console.log(devs)
 	Plotly.newPlot("myDiv2", data);
 		
     </script>
@@ -219,7 +255,7 @@
 	for ( let i = 0; i < devs.length; i++ ){
 	
 		var meas_data = get_measurements(devs[i]);
-		console.log(meas_data)
+		//console.log(meas_data)
 		var v = {
 			x: meas_data[0],
 			y: meas_data[1],
@@ -227,7 +263,7 @@
 		data.push(v);
 	}
 	
-	console.log(devs)
+	//console.log(devs)
 	Plotly.newPlot("myDiv3", data);
 		
     </script>

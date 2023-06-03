@@ -113,8 +113,8 @@ def sector_edit(sector_id):
 
     if request.method == 'POST':
         desc = request.form['description']
-        cal = request.form['cal']
-        interval = request.form['interval']
+        cal = int(request.form['cal'])
+        interval = int(request.form['interval'])
 
         if desc == '':
             flash('Descrição necessária!')
@@ -136,8 +136,8 @@ def sector_new():
     if request.method == 'POST':
         sector_id = request.form['sector_id']
         desc = request.form['description']
-        cal = request.form['cal']
-        interval = request.form['interval']
+        cal = int(request.form['cal'])
+        interval = int(request.form['interval'])
 
         if desc == '':
             flash('Descrição necessária!')

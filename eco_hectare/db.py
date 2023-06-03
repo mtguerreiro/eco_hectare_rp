@@ -35,6 +35,9 @@ class DataBase:
         # Creates measurements table
         cursor.execute("CREATE TABLE measurements(id INTEGER PRIMARY KEY, deveui, value INTEGER, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
 
+        # Creates sector average measurements table
+        cursor.execute("CREATE TABLE sector_avg_meas(id INTEGER PRIMARY KEY, sector, value INTEGER, ts, FOREIGN KEY(sector) REFERENCES sectors(sector))")
+        
         # Creates RSSI and SNR tables
         cursor.execute("CREATE TABLE rssi_snr(id INTEGER PRIMARY KEY, deveui, rssi, snr, ts, FOREIGN KEY(deveui) REFERENCES devices(deveui))")
         
@@ -164,6 +167,14 @@ class DataBase:
 
         conn = self.db_connect(self.db_file)
 
+        cursor = conn.cursor()
+
+        # Check if device exists
+        exists = self.check_entry_exists(cursor, 'devices', 'deveui', deveui)
+        if exists == False:
+            print('deveui {:} does not exist!\n'.format(deveui))
+            return None
+        
         device_data = conn.execute('SELECT * FROM devices WHERE deveui = ?', (deveui,)).fetchall()[0]
 
         conn.close()
@@ -253,8 +264,22 @@ class DataBase:
         conn.close()
 
         return 0
-    
 
+
+    def get_latest_measurements(self):
+
+        conn = self.db_connect(self.db_file)
+    
+        cursor = conn.cursor()
+        
+        res = cursor.execute("SELECT t1.* FROM measurements AS t1 LEFT OUTER JOIN measurements AS t2 ON t1.deveui = t2.deveui AND (t1.ts < t2.ts OR (t1.ts = t2.ts AND t1.id < t2.id)) WHERE t2.deveui IS NULL").fetchall()
+        #res = cursor.execute("SELECT t1.* FROM measurements t1 WHERE t1.id = (SELECT t2.id FROM measurements t2 WHERE t2.deveui = t1.deveui ORDER BY t2.ts DESC LIMIT 1)").fetchall()
+
+        conn.close()
+        
+        return res
+
+    
     def insert_rssi_snr(self, deveui, rssi, snr, ts):
 
         conn = self.db_connect(self.db_file)
@@ -269,6 +294,62 @@ class DataBase:
 
         data = (deveui, rssi, snr, ts)
         cursor.execute("INSERT INTO rssi_snr (deveui, rssi, snr, ts) VALUES(?, ?, ?, ?)", data)
+        conn.commit()
+
+        conn.close()
+
+        return 0
+
+
+    def insert_irrigation(self, sector, ts):
+
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if sector exists
+        exists = self.check_entry_exists(cursor, 'sectors', 'sector', sector)
+        if exists == False:
+            print('Sector {:} does not exist!\n'.format(sector))
+            return -1
+
+        data = (sector, ts)
+        cursor.execute("INSERT INTO irrigations (sector, ts) VALUES(?, ?)", data)
+        conn.commit()
+
+        conn.close()
+
+        return 0
+
+
+    def get_latest_irrigations(self):
+
+        conn = self.db_connect(self.db_file)
+    
+        cursor = conn.cursor()
+        
+        res = cursor.execute("SELECT t1.* FROM irrigations AS t1 LEFT OUTER JOIN irrigations AS t2 ON t1.sector = t2.sector AND (t1.ts < t2.ts OR (t1.ts = t2.ts AND t1.id < t2.id)) WHERE t2.sector IS NULL").fetchall()
+        #res = cursor.execute("SELECT t1.* FROM measurements t1 WHERE t1.id = (SELECT t2.id FROM measurements t2 WHERE t2.deveui = t1.deveui ORDER BY t2.ts DESC LIMIT 1)").fetchall()
+
+        conn.close()
+        
+        return res
+
+
+    def insert_avg_meas(self, sector, value, ts):
+
+        conn = self.db_connect(self.db_file)
+
+        cursor = conn.cursor()
+
+        # Check if sector exists
+        exists = self.check_entry_exists(cursor, 'sectors', 'sector', sector)
+        if exists == False:
+            print('Sector {:} does not exist!\n'.format(sector))
+            return -1
+
+        data = (sector, value, ts)
+        cursor.execute("INSERT INTO sector_avg_meas (sector, value, ts) VALUES(?, ?, ?)", data)
         conn.commit()
 
         conn.close()
