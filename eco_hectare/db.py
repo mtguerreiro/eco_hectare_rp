@@ -2,7 +2,7 @@ import sqlite3
 import eco_hectare as eh
 
 class DataBase:
-    def __init__(self, db_file='static/main.db', create=False):
+    def __init__(self, db_file='/home/pi/tst/eco_hectare/eco_hectare/static/main.db', create=False):
 
         self.db_file = db_file
 

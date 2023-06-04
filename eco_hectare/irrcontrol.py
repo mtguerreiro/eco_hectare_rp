@@ -1,7 +1,7 @@
 import eco_hectare as eh
 import numpy as np
 import datetime
-#import zoneinfo
+import zoneinfo
 
 def proc_new():
     eh_db = eh.db.DataBase()
@@ -21,7 +21,7 @@ def proc_new():
     # Gets the latest measurement from each sensor
     for d in eh_db.get_latest_measurements():
         latest_data[d['deveui']] = {'ts':d['ts'], 'value':d['value']}
-
+   
     # Gets the last irrigation time for each sector
     for d in eh_db.get_latest_irrigations():
         n = d['sector']
@@ -45,6 +45,7 @@ def proc_new():
                 ts = latest_data[d['deveui']]['ts']
                 value = latest_data[d['deveui']]['value']
                 tm = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                tm = tm.replace(tzinfo=zoneinfo.ZoneInfo('America/Sao_Paulo'))
                 dt = t - tm
                 if dt.seconds < (15 * 60):
                     # Only adds measurements if they are recent enough
@@ -55,6 +56,7 @@ def proc_new():
                     
         if n in latest_irr:
             tm = datetime.datetime.strptime(latest_irr[n], "%Y-%m-%d %H:%M:%S")
+            tm = tm.replace(tzinfo=zoneinfo.ZoneInfo('America/Sao_Paulo'))
             dt = t - tm
             sectors[n]['last_irr'] = latest_irr[n]
             sectors[n]['last_irr_dt'] = dt.seconds
@@ -81,7 +83,7 @@ def proc_new():
 
     # Determines whether irrigation is required
     for sec_n, sec_data in sectors.items():
-        print(sec_data)
+        #print(sec_data)
         cal = sec_data['cal']
         avg = sec_data['avg']
         sec_data['irr'] = False
