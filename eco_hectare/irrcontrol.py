@@ -1,154 +1,131 @@
 import eco_hectare as eh
 import numpy as np
 import datetime
+#import zoneinfo
 
-eh_db = eh.db.DataBase(db_file='static/main.db', create=False)
+def proc_new():
+    eh_db = eh.db.DataBase()
 
-# --- Defs ---
-class SectorData:
-    def __init__(self, sector, cal, interval, ids):
+    # --- Logic ---
+    # Creats a list with data from all sectors
+    sectors = {}
 
-        self.sector = sector
+    latest_data = {}
+    latest_irr = {}
+    latest_avg = {}
 
-        self.ids = ids
+    #t = datetime.datetime.today()
+    t = datetime.datetime.utcnow().astimezone(zoneinfo.ZoneInfo('America/Sao_Paulo'))
+    tstr = t.strftime("%Y-%m-%d %H:%M:%S")
 
-        n = len(ids)
-        self.ts = [None] * n
-        self.val = [None] * n
+    # Gets the latest measurement from each sensor
+    for d in eh_db.get_latest_measurements():
+        latest_data[d['deveui']] = {'ts':d['ts'], 'value':d['value']}
 
-        latest_data = eh_db.get_latest_measurements()
+    # Gets the last irrigation time for each sector
+    for d in eh_db.get_latest_irrigations():
+        n = d['sector']
+        latest_irr[n] = d['ts']
 
-        for d in latest_data:
-            i = d['deveui']
-            if i in self.ids:
-                idx = self.ids.index(i)
-                self.ts[idx] = d['ts']
-                self.val[idx] = d['value']
-
-        self.update_all()
-
-
-    def update_all(self):
-        """Marks measurements older than 15 min. as invalid"""
-
-        t = datetime.datetime.today()
-
-        n = len(self.ids)
-        for i in range(n):
-            if self.ts[i] == None: continue            
-            ti = datetime.datetime.strptime(self.ts[i], "%Y-%m-%d %H:%M:%S")
-            dt = t - ti
-            if dt.seconds > (15 * 60):
-                self.ts[i] = None
-                self.val[i] = None
-
-
-    def update_meas(self, eui, val, ts):
-
-        if eui in self.ids:
-            idx = self.ids.index(eui)
-            self.ts[idx] = ts
-            self.val[idx] = val
-
-        self.update_all()
-
-
-    def mean(self):
-      
-        n = len(self.ids)
-        acc = 0
-        m = 0
-        for i in range(n):
-            if self.val[i] != None:
-                acc = acc + self.val[i]
-                m = m + 1
-
-        if m != 0:
-            avg = acc / m
+    # Gets the latest average for each sector
+    for d in eh_db.get_latest_average():
+        n = d['sector']
+        latest_avg[n] = {'ts':d['ts'], 'value':d['value']}
+        
+    # Fills in essential sector data
+    for sector in eh_db.get_sectors():
+        n = sector['sector']
+        sectors[n] = {'ts':[], 'value':[], 'atuador':[], 'irr': False}
+        sec_data = eh_db.get_sector_data(n)
+        sectors[n]['cal'] = sec_data['cal']
+        sectors[n]['interval'] = sec_data['interval']
+        devs = eh_db.get_devices_by_sector(n)
+        for d in devs:
+            if d['type'] == 'sensor' and d['deveui'] in latest_data:
+                ts = latest_data[d['deveui']]['ts']
+                value = latest_data[d['deveui']]['value']
+                tm = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                dt = t - tm
+                if dt.seconds < (15 * 60):
+                    # Only adds measurements if they are recent enough
+                    sectors[n]['ts'].append(ts)
+                    sectors[n]['value'].append(value)
+            elif d['type'] == 'atuador':
+                sectors[n]['atuador'].append(d['deveui'])
+                    
+        if n in latest_irr:
+            tm = datetime.datetime.strptime(latest_irr[n], "%Y-%m-%d %H:%M:%S")
+            dt = t - tm
+            sectors[n]['last_irr'] = latest_irr[n]
+            sectors[n]['last_irr_dt'] = dt.seconds
         else:
-            avg = None
-                
-        return round(avg)
+            sectors[n]['last_irr'] = None
+            sectors[n]['last_irr_dt'] = None
 
+    # Computes the average with the latest measurements
+    for sec_n, sec_data in sectors.items():
+        n = len(sec_data['value'])
+        acc = sum(sec_data['value'])
+        if n != 0: sec_avg = round(acc / n)
+        else: sec_avg = None
+        sec_data['avg'] = sec_avg
 
-    def irr_required(self):
+        # Checks if latest average is already stored
+        if sec_avg is not None:
+            last = sorted(sec_data['ts'],
+                          key = lambda d: datetime.datetime.strptime(d, '%Y-%m-%d %H:%M:%S'),
+                          reverse=True)[0]
 
-        sector_data = eh_db.get_sector_data(self.sector)
-        cal = sector_data['cal']
-        interval = sector_data['interval']
+            if (latest_avg == {}) or (last != latest_avg[sec_n]['ts']):
+                eh_db.insert_avg_meas(sec_n, sec_avg, last)
 
-        last_irrs = eh_db.get_latest_irrigations()
+    # Determines whether irrigation is required
+    for sec_n, sec_data in sectors.items():
+        print(sec_data)
+        cal = sec_data['cal']
+        avg = sec_data['avg']
+        sec_data['irr'] = False
+        if avg is None:
+            sec_data['irr'] = False
+        else:        
+            if avg < cal:
+                if sec_data['last_irr'] is None:
+                    sec_data['irr'] = True
+                else:
+                    dt = sec_data['last_irr_dt'] / 60 / 60
+                    if dt > sec_data['interval']:
+                        sec_data['irr'] = True
 
-        if last_irrs is None:
-            print('Irrigation record is empty, thus irrigation will be activated.\n')
-            return True
-
-        ts = None
-
-        for irr in last_irrs:
-            if irr['sector'] == self.sector:
-                ts = irr['ts']
-                break
-
-        if ts is None:
-            print('Could not find sector {:} in irrigation record. Irrigation will be activated.\n'.format(self.sector))
-            return True
-
-        t = datetime.datetime.today()
-        ti = datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-        print('Current time: {:}'.format(t))
-        print('Last irrigation: {:}'.format(ti))
-        dt = t - ti
-        dt = round(dt.seconds / 60 / 60)
-        if dt < interval:
-            return False
-
-        print('Hora de irrigar (sector {:})'.format(self.sector))
-        return True
-
-# --- Logic ---
-# Creats a list with data from all sectors
-sectors = []
-for sector in eh_db.get_sectors():
-    devs = eh_db.get_devices_by_sector(sector['sector'])
-    eui = []
-    for d in devs:
-        if d['type'] == 'sensor':
-            eui.append(d['deveui'])
-
-    sectors.append(
-        SectorData(
-            sector['sector'],
-            sector['cal'],
-            sector['interval'],
-            eui)
-        )
-
-
-def proc_new_data(deveui, val, ts):
-
-    dev_data = eh_db.get_device_data(deveui)
-
-    if dev_data == None:
-        return
-
-    n = len(sectors)
-    sector = None
-    for i in range(n):
-        if deveui in sectors[i].ids:
-            sector = sectors[i]
-            break
-
-    if sector is None:
-        return
+        # Send downlinks as necessary
+        if sec_data['irr'] is True:
+            for actuator in sec_data['atuador']:
+                eh.downlink.send_downlink(actuator)
+            eh_db.insert_irrigation(sec_n, tstr)
     
-    sector.update_meas(deveui, val, ts)
-    avg = sector.mean()
-    if avg is None:
-        print('Average for sector {:} is invalid'.format(sector.sector))
-        return
+    print('|{:^7}|{:^7}|{:^7}|{:^11}|{:^30}|{:^10}'.format('Setor', 'Cal', 'Media', 'Intervalo', 'Ultima irr. (dt)', 'Irrig?'))
+    for sec_n, sector in sectors.items():
+        
+        cal = sector['cal']
+        
+        avg = sector['avg']
+        
+        if avg is None: avg = '--'
+        
+        interval = sector['interval']
 
-    eh_db.insert_avg_meas(sector.sector, avg, ts)
-    
-    irr_req = sector.irr_required()
+        last_irr = sector['last_irr']
+        if last_irr is None: last_irr = '--'
+        
+        last_irr_dt = sector['last_irr_dt']
+        if last_irr_dt is None: last_irr_dt = '--'
+        else:
+            minutes = int(last_irr_dt / 60)
+            h = int(minutes / 60 )
+            mints = minutes % 60
+            last_irr_dt = '{:02}:{:02}'.format(h, mints)
 
+        irrig = sector['irr']
+        if irrig is False: irrig = 'Nao'
+        else: irrig = 'Sim'
+        
+        print('|{:^7}|{:^7}|{:^7}|{:^11}|{:^21} ({:^5}) |{:^10}'.format(sec_n, cal, avg, interval, last_irr, last_irr_dt, irrig))

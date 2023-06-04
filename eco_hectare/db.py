@@ -355,3 +355,17 @@ class DataBase:
         conn.close()
 
         return 0
+
+
+    def get_latest_average(self):
+
+        conn = self.db_connect(self.db_file)
+    
+        cursor = conn.cursor()
+        
+        res = cursor.execute("SELECT t1.* FROM sector_avg_meas AS t1 LEFT OUTER JOIN sector_avg_meas AS t2 ON t1.sector = t2.sector AND (t1.ts < t2.ts OR (t1.ts = t2.ts AND t1.id < t2.id)) WHERE t2.sector IS NULL").fetchall()
+        #res = cursor.execute("SELECT t1.* FROM measurements t1 WHERE t1.id = (SELECT t2.id FROM measurements t2 WHERE t2.deveui = t1.deveui ORDER BY t2.ts DESC LIMIT 1)").fetchall()
+
+        conn.close()
+        
+        return res

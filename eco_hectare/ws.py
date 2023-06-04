@@ -7,7 +7,7 @@ import eco_hectare as eh
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'jajaja'
 
-eh_db = eh.db.DataBase(db_file='static/main.db', create=True)
+eh_db = eh.db.DataBase(create=True)
 
 @app.route('/')
 def index():

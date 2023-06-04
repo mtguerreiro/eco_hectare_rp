@@ -7,7 +7,7 @@ import eco_hectare as eh
 
 client_address = 'localhost'
 
-db = eh.db.DataBase(db_file='static/main.db', create=True)
+db = eh.db.DataBase(create=True)
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -30,9 +30,12 @@ def on_message(client, userdata, msg):
         t = datetime.datetime.utcnow().astimezone(zoneinfo.ZoneInfo('America/Sao_Paulo'))
         ts = t.strftime("%Y-%m-%d %H:%M:%S")
         print('+topic: {:}\ndevEUI: {:}\tdata: {:} \ttimestamp: {:}\n\n'.format(msg.topic, deveui, sensor_data, ts))
-        
-        db.insert_measurement(deveui, sensor_data, ts)
-        db.insert_rssi_snr(deveui, rssi, snr, ts)
+
+        dev_data = db.get_device_data(deveui)
+        if dev_data['type'] == 'sensor':
+            db.insert_measurement(deveui, sensor_data, ts)
+            db.insert_rssi_snr(deveui, rssi, snr, ts)
+            eh.irrcontrol.proc_new()
     except:
         pass
 
